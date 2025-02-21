@@ -11,6 +11,9 @@ if [ "$(id -u)" != "0" ]; then
   exit 1
 fi
 
+# Modify repository URL
+git clone https://github.com/maxregnerklos/ghostbsd-src
+
 # Use find to locate base files and extract filenames directly, converting newlines to spaces
 find packages -type f ! -name '*base*' ! -name '*common*' ! -name '*drivers*' -exec basename {} \; | sort -u | tr '\n' ' '
 
@@ -44,9 +47,9 @@ done
 if [ "${build_type}" = "test" ] ; then
   PKG_CONF="FreeBSD"
 elif [ "${build_type}" = "release" ] ; then
-  PKG_CONF="GhostBSD"
+  PKG_CONF="MRBSD"
 elif [ "${build_type}" = "unstable" ] ; then
-  PKG_CONF="GhostBSD_Unstable"
+  PKG_CONF="MRBSD_Unstable"
 else
   printf "\t-b Build type: unstable or release"
   exit 1
@@ -78,26 +81,26 @@ else
 fi
 
 workdir="/usr/local"
-livecd="${workdir}/ghostbsd-build"
+livecd="${workdir}/mrbsd-build"
 base="${livecd}/base"
 iso="${livecd}/iso"
 packages_storage="${livecd}/packages"
 release="${livecd}/release"
 export release
 cd_root="${livecd}/cd_root"
-live_user="ghostbsd"
+live_user="mrbsd"
 export live_user
 
 time_stamp=""
 release_stamp=""
-label="GhostBSD"
+label="MRBSD"
 
 workspace()
 {
   # Unmount any existing mounts and clean up
   umount ${packages_storage} >/dev/null 2>/dev/null || true
   umount ${release}/dev >/dev/null 2>/dev/null || true
-  zpool destroy ghostbsd >/dev/null 2>/dev/null || true
+  zpool destroy mrbsd >/dev/null 2>/dev/null || true
   umount ${release} >/dev/null 2>/dev/null || true
 
   # Remove old build directory if it exists
@@ -125,13 +128,13 @@ workspace()
   mdconfig -f ${livecd}/pool.img -u 0
 
   # Attempt to create the ZFS pool with error handling
-  if ! zpool create -O mountpoint="${release}" -O compression=zstd-9 ghostbsd /dev/md0; then
+  if ! zpool create -O mountpoint="${release}" -O compression=zstd-9 mrbsd /dev/md0; then
     # Provide detailed error message in case of failure
-    echo "Error: Failed to create ZFS pool 'ghostbsd' with the following command:"
-    echo "zpool create -O mountpoint='${release}' -O compression=zstd-9 ghostbsd /dev/md0"
+    echo "Error: Failed to create ZFS pool 'mrbsd' with the following command:"
+    echo "zpool create -O mountpoint='${release}' -O compression=zstd-9 mrbsd /dev/md0"
     
     # Clean up resources in case of failure
-    zpool destroy ghostbsd 2>/dev/null || true
+    zpool destroy mrbsd 2>/dev/null || true
     mdconfig -d -u 0 2>/dev/null || true
     rm -f ${livecd}/pool.img 2>/dev/null || true
     
@@ -163,7 +166,7 @@ base()
   mkdir ${release}/cdrom
 }
 
-set_ghostbsd_version()
+set_mrbsd_version()
 {
   if [ "${desktop}" = "test" ] ; then
     version="$(date +%Y-%m-%d)"
@@ -176,7 +179,7 @@ set_ghostbsd_version()
 packages_software()
 {
   if [ "${build_type}" = "unstable" ] ; then
-    cp pkg/GhostBSD_Unstable.conf ${release}/etc/pkg/GhostBSD.conf
+    cp pkg/MRBSD_Unstable.conf ${release}/etc/pkg/MRBSD.conf
   fi
   cp /etc/resolv.conf ${release}/etc/resolv.conf
   mkdir -p ${release}/var/cache/pkg
@@ -235,22 +238,22 @@ rc()
   chroot ${release} sysrc ntpd_sync_on_start="YES"
 }
 
-ghostbsd_config()
+mrbsd_config()
 {
   # echo "gop set 0" >> ${release}/boot/loader.rc.local
-  mkdir -p ${release}/usr/local/share/ghostbsd
-  echo "${desktop}" > ${release}/usr/local/share/ghostbsd/desktop
+  mkdir -p ${release}/usr/local/share/mrbsd
+  echo "${desktop}" > ${release}/usr/local/share/mrbsd/desktop
   # Mkdir for linux compat to ensure /etc/fstab can mount when booting LiveCD
   chroot ${release} mkdir -p /compat/linux/dev/shm
   # Add /boot/entropy file
   chroot ${release} touch /boot/entropy
-  # default GhostBSD to local time instead of UTC
+  # default MRBSD to local time instead of UTC
   chroot ${release} touch /etc/wall_cmos_clock
 }
 
 desktop_config()
 {
-  # run config for GhostBSD flavor
+  # run config for MRBSD flavor
   sh "${cwd}/desktop_config/${desktop}.sh"
 }
 
@@ -258,8 +261,8 @@ uzip()
 {
   install -o root -g wheel -m 755 -d "${cd_root}"
   mkdir "${cd_root}/data"
-  zfs snapshot ghostbsd@clean
-  zfs send -p -c -e ghostbsd@clean | dd of=/usr/local/ghostbsd-build/cd_root/data/system.img status=progress bs=1M
+  zfs snapshot mrbsd@clean
+  zfs send -p -c -e mrbsd@clean | dd of=/usr/local/mrbsd-build/cd_root/data/system.img status=progress bs=1M
 }
 
 ramdisk()
@@ -270,7 +273,7 @@ ramdisk()
   tar -cf - rescue | tar -xf - -C "${ramdisk_root}"
   cd "${cwd}"
   install -o root -g wheel -m 755 "init.sh.in" "${ramdisk_root}/init.sh"
-  sed "s/@VOLUME@/GHOSTBSD/" "init.sh.in" > "${ramdisk_root}/init.sh"
+  sed "s/@VOLUME@/MRBSD/" "init.sh.in" > "${ramdisk_root}/init.sh"
   mkdir "${ramdisk_root}/dev"
   mkdir "${ramdisk_root}/etc"
   touch "${ramdisk_root}/etc/fstab"
@@ -296,9 +299,9 @@ boot()
   umount ${release} >/dev/null 2>/dev/null || true
   
   # Export ZFS pool and ensure it's clean
-  zpool export ghostbsd
+  zpool export mrbsd
   timeout=10
-  while zpool status ghostbsd >/dev/null 2>&1; do
+  while zpool status mrbsd >/dev/null 2>&1; do
     sleep 1
     timeout=$((timeout - 1))
     if [ $timeout -eq 0 ]; then
@@ -329,15 +332,39 @@ image()
 
 workspace
 base
-set_ghostbsd_version
+set_mrbsd_version
 if [ "${desktop}" != "test" ] ; then
   packages_software
   fetch_x_drivers_packages
   rc
   desktop_config
-  ghostbsd_config
+  mrbsd_config
 fi
 uzip
 ramdisk
 boot
 image
+
+# Modify repository URL
+git clone https://github.com/yourusername/mrbsd-fork.git
+
+# Adjust build process for MRBSD
+# existing code...
+# pkg install build-dependency
+mrbsd_pkg_install build-dependency
+# existing code...
+
+# Run setup scripts for new features
+./install_dependencies.sh
+./setup_auto_updates.sh
+./install_monitoring_tools.sh
+./ssh_hardening.sh
+
+# Set up MROS-specific UI and settings
+./desktop_config/mros_ui.sh
+./desktop_config/mros_shortcuts.sh
+./desktop_config/mros_system_settings.sh
+
+# Build the system
+./create_iso.sh
+./write_to_disk.sh
