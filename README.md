@@ -1,66 +1,58 @@
-ghostbsd-build
-==============
-Live media creator for GhostBSD distribution
+# MRBSD Project
 
-## Introduction
-The purpose of this tool is to quickly generate live images for GhostBSD.
+This project is designed to work with MRBSD, a variant of BSD. Below are the key areas of adaptation:
 
-## Features
-* Build GhostBSD from packages
-* Mate and XFCE desktop environments
-* Hybrid DVD/USB image
+## System Requirements & Dependencies
 
-## Graphics support
-* Compatible with VirtualBox, VMware, NVIDIA graphics out of box
-* SCFB support with automatic best resolution for UEFI enabled systems with Intel/AMD graphics
+- Ensure MRBSD is installed.
+- Minimum system requirements: [Specify MRBSD-specific requirements here].
+- Use `mrbsd_pkg_install` for package management.
 
-## System requirements
-* Latest version of GhostBSD 
-* 20GB of free disk space
-* 4GB of free memory
+## Kernel & Module Adjustments
 
-Note: GhostBSD 22.01.12 and later should be used to build ISO.
+- Load necessary MRBSD kernel modules using `kldload`.
+- Replace any Linux-specific configurations with MRBSD equivalents.
 
-## Initial setup
-Install the required packages:
-```
-pkg install git transmission-utils rsync
-```
-Make sure to have linux64 kernel module loaded
-```
-kldload linux64
-sysrc -f /etc/rc.conf kld_list="linux64"
-```
-Clone the repo:
-```
-git clone https://www.github.com/ghostbsd/ghostbsd-build.git
-```
-## Starting a build
-#### Enter the directory for running the LiveCD build script:
-```
-cd ghostbsd-build
-```
+## Repository & Build Process
 
-#### To build a GhostBSD with __MATE__ as default desktop
-```
-./build.sh -d mate -b unstable
-```
-or
-```
-./build.sh -d mate -b release
-```
+- Clone the MRBSD repository: `git clone https://github.com/yourusername/mrbsd-fork.git`.
+- Use `build.sh` to handle MRBSD-specific package sources and dependencies.
 
-#### (Option) To build GhostBSD with __XFCE__ as default desktop
-```
-./build.sh -d xfce -b unstable
-```   
+## ISO Creation & Bootloader
 
-## Burn an image to cd:
-```
-cdrecord /usr/local/ghostbsd-build/iso/GhostBSD-22.01.12.iso
-```
+- Use `grub-mkrescue` for creating hybrid DVD/USB images.
+- Ensure support for VirtualBox, VMware, and NVIDIA.
 
-## Write an image to usb stick:
-```
-dd if=/usr/local/ghostbsd-build/iso/GhostBSD-22.01.12.iso of=/dev/da0 bs=4m
-```
+## Installation Commands & Disk Writing
+
+- Use `mrbsd_cdrecord` and `mrbsd_dd` for writing to disk.
+
+## Getting Started
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/mrbsd-fork.git
+   ```
+
+2. Run the build script:
+   ```bash
+   sudo ./build.sh
+   ```
+
+3. Create the ISO:
+   ```bash
+   ./create_iso.sh
+   ```
+
+4. Write the ISO to a disk:
+   ```bash
+   ./write_to_disk.sh
+   ```
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

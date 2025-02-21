@@ -12,7 +12,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 # Modify repository URL
-git clone https://github.com/maxregnerklos/ghostbsd-src
+git clone https://github.com/yourusername/mrbsd-fork.git
 
 # Use find to locate base files and extract filenames directly, converting newlines to spaces
 find packages -type f ! -name '*base*' ! -name '*common*' ! -name '*drivers*' -exec basename {} \; | sort -u | tr '\n' ' '

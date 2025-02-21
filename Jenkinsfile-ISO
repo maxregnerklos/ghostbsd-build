@@ -1,28 +1,26 @@
 pipeline {
-  agent {
-    label 'GhostBSD-ISO'
-  }
+  agent any
 
   stages {
-
-    stage('clean') {
+    stage('Clone Repository') {
       steps {
-        sh 'cd /usr/local/ghostbsd-build/trueos && rm *.iso || true'
-	    sh 'rm -rf ghostbsd-build || true'
+        git 'https://github.com/yourusername/mrbsd-fork.git'
       }
     }
-    
-    stage('pull') {
+    stage('Build') {
       steps {
-        sh 'git clone https://github.com/ghostbsd/ghostbsd-build --depth=1|| true'
+        sh './build.sh'
       }
     }
-    
-    stage('build') {
+    stage('Create ISO') {
       steps {
-        sh 'cd ghostbsd-build && ./build.sh trueos mate'
+        sh './create_iso.sh'
       }
     }
-    
+    stage('Write to Disk') {
+      steps {
+        sh './write_to_disk.sh'
+      }
+    }
   }
 }
