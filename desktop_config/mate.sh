@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# MRBSD-specific desktop configuration for MATE
+# Set up MATE desktop environment
+
 set -e -u
 
 . "${cwd}/common_config/autologin.sh"
